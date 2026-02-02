@@ -6,9 +6,11 @@ TopoCoT (Topology Chain-of-Thought) is a multi-stage training pipeline for lane 
 
 ## Table of Contents
 
+- [Challenge](#challenge)
 - [Features](#features)
 - [Installation](#installation)
 - [Data Preparation](#data-preparation)
+- [Project Structure](#project-structure)
 - [Training](#training)
   - [Stage 1: BEVFormer Pre-training](#stage-1-bevformer-pre-training)
   - [Stage 2: Adapter Training](#stage-2-adapter-training)
@@ -16,11 +18,18 @@ TopoCoT (Topology Chain-of-Thought) is a multi-stage training pipeline for lane 
 - [Testing and Evaluation](#testing-and-evaluation)
 - [Configuration](#configuration)
 - [Pre-trained Weights](#pre-trained-weights)
-- [Project Structure](#project-structure)
-- [Challenge](#challenge)
 - [Acknowledgments](#acknowledgments)
 - [Citation](#citation)
 - [TODO / Future Work](#todo--future-work)
+
+## Challenge
+
+TopoCoT is associated with the **1st WACV 2026 Workshop on Robust and Generalized Lane Topology Understanding and HD Map Generation through CoT Design**.
+
+- **Challenge Homepage**: [https://topocotwacv26.github.io/](https://topocotwacv26.github.io/)
+- **Workshop Date**: March 7, 2026
+
+The workshop provides a platform for industry experts and academics to exchange ideas about road understanding CoT (Chain-of-Thought) and its applications in autonomous driving. It includes regular and demo paper presentations, invited talks, and hosts a challenge based on open-source real-world CoT lane topology reasoning datasets.
 
 ## Features
 
@@ -81,6 +90,65 @@ This script:
 Before training, update the paths in the config files:
 - `projects/configs/topocot_olv2_stage1.py`: Update data paths
 - `projects/configs/topocot_olv2_stage3.py`: Update `train_conv_path` to point to your `train_conv_rdp` directory
+
+## Project Structure
+
+```
+TopoCoT_code/
+├── projects/              # Model implementations
+│   ├── bevformer/        # BEVFormer backbone
+│   ├── lanesegnet/       # Lane segmentation network
+│   ├── plugin/           # Plugin modules
+│   └── configs/          # Configuration files
+├── InternVL2-2B/         # InternVL2 LLM model weights and tokenizer
+├── tools/                # Training and evaluation scripts
+│   ├── dist_train.sh     # Stage 1 training script
+│   ├── dist_train_stage2.sh  # Stage 2 training script
+│   ├── dist_train_stage3.sh  # Stage 3 training script
+│   ├── dist_test.sh      # Testing script
+│   ├── evaluate/         # Evaluation tools
+│   └── visualize_test.py # Visualization script
+├── data/                 # Dataset and generated data
+│   ├── data_dict_subset_A_train_lanesegnet.pkl  # Training annotation file
+│   ├── data_dict_subset_A_val_lanesegnet.pkl     # Validation annotation file
+│   ├── Trainset/         # Training data (scenes 00000-00699)
+│   │   ├── 00000/        # Scene ID
+│   │   │   ├── 315967376899927209/  # Timestamp
+│   │   │   │   ├── ring_front_center.jpg
+│   │   │   │   ├── ring_front_left.jpg
+│   │   │   │   ├── ring_front_right.jpg
+│   │   │   │   ├── ring_rear_left.jpg
+│   │   │   │   ├── ring_rear_right.jpg
+│   │   │   │   ├── ring_side_left.jpg
+│   │   │   │   ├── ring_side_right.jpg
+│   │   │   │   ├── lane_with_drive.json
+│   │   │   │   ├── lane_with_drive_bev.json
+│   │   │   │   └── TopoCoT.json
+│   │   │   └── ... (more timestamps)
+│   │   ├── 00001/
+│   │   └── ... (scenes 00000 to 00699)
+│   ├── Testset/          # Test data (50 challenging scenes)
+│   │   ├── 10000/        # Scene ID
+│   │   │   ├── 315967933449927213/  # Timestamp
+│   │   │   │   ├── ring_front_center.jpg
+│   │   │   │   ├── ring_front_left.jpg
+│   │   │   │   ├── ring_front_right.jpg
+│   │   │   │   ├── ring_rear_left.jpg
+│   │   │   │   ├── ring_rear_right.jpg
+│   │   │   │   ├── ring_side_left.jpg
+│   │   │   │   └── ring_side_right.jpg
+│   │   │   └── ... (more timestamps)
+│   │   └── ... (50 challenging scenes)
+│   └── train_conv_rdp/   # Generated conversation data for training
+│       ├── {segment_id}/  # Scene ID
+│       │   ├── {timestamp}/  # Timestamp
+│       │   │   └── bev_conv.json  # Conversation format data
+│       │   └── ... (more timestamps)
+│       └── ... (more scenes)
+├── OpenLane-V2-master/   # OpenLane-V2 dependency
+├── convert_train_conv_rdp.py  # Data conversion script
+└── requirements.txt      # Python dependencies
+```
 
 ## Training
 
@@ -206,74 +274,6 @@ To use pre-trained weights, update the `load_from` parameter in your config file
 ```python
 load_from = './path/to/pretrained/checkpoint.pth'
 ```
-
-## Project Structure
-
-```
-TopoCoT_code/
-├── projects/              # Model implementations
-│   ├── bevformer/        # BEVFormer backbone
-│   ├── lanesegnet/       # Lane segmentation network
-│   ├── plugin/           # Plugin modules
-│   └── configs/          # Configuration files
-├── InternVL2-2B/         # InternVL2 LLM model weights and tokenizer
-├── tools/                # Training and evaluation scripts
-│   ├── dist_train.sh     # Stage 1 training script
-│   ├── dist_train_stage2.sh  # Stage 2 training script
-│   ├── dist_train_stage3.sh  # Stage 3 training script
-│   ├── dist_test.sh      # Testing script
-│   ├── evaluate/         # Evaluation tools
-│   └── visualize_test.py # Visualization script
-├── data/                 # Dataset and generated data
-│   ├── data_dict_subset_A_train_lanesegnet.pkl  # Training annotation file
-│   ├── data_dict_subset_A_val_lanesegnet.pkl     # Validation annotation file
-│   ├── Trainset/         # Training data (scenes 00000-00699)
-│   │   ├── 00000/        # Scene ID
-│   │   │   ├── 315967376899927209/  # Timestamp
-│   │   │   │   ├── ring_front_center.jpg
-│   │   │   │   ├── ring_front_left.jpg
-│   │   │   │   ├── ring_front_right.jpg
-│   │   │   │   ├── ring_rear_left.jpg
-│   │   │   │   ├── ring_rear_right.jpg
-│   │   │   │   ├── ring_side_left.jpg
-│   │   │   │   ├── ring_side_right.jpg
-│   │   │   │   ├── lane_with_drive.json
-│   │   │   │   ├── lane_with_drive_bev.json
-│   │   │   │   └── TopoCoT.json
-│   │   │   └── ... (more timestamps)
-│   │   ├── 00001/
-│   │   └── ... (scenes 00000 to 00699)
-│   ├── Testset/          # Test data (50 challenging scenes)
-│   │   ├── 10000/        # Scene ID
-│   │   │   ├── 315967933449927213/  # Timestamp
-│   │   │   │   ├── ring_front_center.jpg
-│   │   │   │   ├── ring_front_left.jpg
-│   │   │   │   ├── ring_front_right.jpg
-│   │   │   │   ├── ring_rear_left.jpg
-│   │   │   │   ├── ring_rear_right.jpg
-│   │   │   │   ├── ring_side_left.jpg
-│   │   │   │   └── ring_side_right.jpg
-│   │   │   └── ... (more timestamps)
-│   │   └── ... (50 challenging scenes)
-│   └── train_conv_rdp/   # Generated conversation data for training
-│       ├── {segment_id}/  # Scene ID
-│       │   ├── {timestamp}/  # Timestamp
-│       │   │   └── bev_conv.json  # Conversation format data
-│       │   └── ... (more timestamps)
-│       └── ... (more scenes)
-├── OpenLane-V2-master/   # OpenLane-V2 dependency
-├── convert_train_conv_rdp.py  # Data conversion script
-└── requirements.txt      # Python dependencies
-```
-
-## Challenge
-
-TopoCoT is associated with the **1st WACV 2026 Workshop on Robust and Generalized Lane Topology Understanding and HD Map Generation through CoT Design**.
-
-- **Challenge Homepage**: [https://topocotwacv26.github.io/](https://topocotwacv26.github.io/)
-- **Workshop Date**: March 7, 2026
-
-The workshop provides a platform for industry experts and academics to exchange ideas about road understanding CoT (Chain-of-Thought) and its applications in autonomous driving. It includes regular and demo paper presentations, invited talks, and hosts a challenge based on open-source real-world CoT lane topology reasoning datasets.
 
 ## Acknowledgments
 

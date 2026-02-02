@@ -1,0 +1,22 @@
+tqdm
+ninja
+jupyter
+openmim
+matplotlib
+numpy ==1.23.5
+numba ==0.53.0
+Ipython ==8.12.2
+scikit-learn
+similaritymeasures
+opencv-python
+scipy ==1.8.0
+ortools ==9.3.10497
+iso3166
+chardet
+shapely ==1.8.5.post1
+einops
+imageio ==2.31.4
+imageio-ffmpeg ==0.4.9
+av2 ==0.2.1
+nuscenes-devkit ==1.1.11
+yapf ==0.40.1

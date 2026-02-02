@@ -1,0 +1,1 @@
+from .SQDMapDetectorHead import SQDMapDetectorHead

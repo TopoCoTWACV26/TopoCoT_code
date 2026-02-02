@@ -886,101 +886,7 @@ class LLMDecoder(nn.Module):
         ys = [f"<Y_{i}>" for i in range(y_cap + 1)]
         return xs + ys
 
-    # def create_llm(self, load_weight=True, device=None):
-    #     """Initialize the tokenizer and LLM model with proper GPU placement."""
-    #     # Initialize tokenizer
-    #     self.tokenizer = AutoTokenizer.from_pretrained(
-    #         self.tokenizer_path,
-    #         add_eos_token=False,
-    #         trust_remote_code=True,
-    #         use_fast=False
-    #     )
-    #     self.tokenizer.tokenizer_path = self.tokenizer_path
-    #     self.tokenizer.model_max_length = 10100
-     
-    #     # Add special tokens
-    #     # token_list = [
-    #     #     IMG_START_TOKEN, IMG_END_TOKEN, IMG_CONTEXT_TOKEN,
-    #     #     QUAD_START_TOKEN, QUAD_END_TOKEN, REF_START_TOKEN,
-    #     #     REF_END_TOKEN, BOX_START_TOKEN, BOX_END_TOKEN
-    #     # ]
-    #     token_list = [
-    #         IMG_CONTEXT_TOKEN
-    #     ]
-    #     self.num_new_tokens = self.tokenizer.add_tokens(token_list, special_tokens=True)
-    #     self.img_context_token_id = self.tokenizer.convert_tokens_to_ids(IMG_CONTEXT_TOKEN)
-    #     coord_tokens = self.build_coord_tokens(x_cap=500, y_cap=1000)
-    #     special_tokens_dict = {"additional_special_tokens": coord_tokens}
-    #     num_added = self.tokenizer.add_special_tokens(special_tokens_dict)
 
-    #     self.learnable_query_token_id = -10
-
-    #     print('load pretrained llm:',self.model_path)
-    #     config = InternVLChatConfig.from_pretrained(self.model_path)
-
-    #     config.vision_config.drop_path_rate = 0.
-    #     config.template = self.template_name
-    #     config.select_layer = -1  # -1
-    #     config.dynamic_image_size = True  # True
-    #     config.use_thumbnail = True  # True
-    #     config.ps_version = 'v2'  # 'v2'
-    #     config.min_dynamic_patch = 1  # 1
-    #     config.max_dylisnamic_patch = 6  # 6
-
-    #     if self.model_name == "InternVL2-1B":
-    #         config.llm_config._attn_implementation = self.attention_type  # qwen2
-    #     config.llm_config.attn_implementation = self.attention_type  # flash attn / attn
-
-    #     if self.load_weight:
-    #         model = InternVLChatModel.from_pretrained(self.model_path, torch_dtype=self.torch_dtype, config=config)
-    #     else:
-    #         model = InternVLChatModel._from_config(config).to(self.torch_dtype)
-
-    #     model.language_model.config.use_cache = False
-    #     self.llm = model.language_model
-
-    #     # --- resize LLM embeddings to match tokenizer ---
-    #     new_vocab_size = len(self.tokenizer)
-
-    #     old_vocab_size = self.llm.get_input_embeddings().weight.size(0)
-    #     print(f"[LLM] vocab resize: {old_vocab_size} -> {new_vocab_size}")
-
-    #     if new_vocab_size != old_vocab_size:
-    #         self.llm.resize_token_embeddings(new_vocab_size)
-
-    #     # sanity check
-    #     assert self.llm.get_input_embeddings().weight.size(0) == new_vocab_size
-
-    #     if self.is_pretraining:
-    #         _freeze_params(self.llm)
-    #         if self.lora:
-    #             warnings.warn("Should not use lora during pretraining!")
-    #             self.set_lora(model)
-    #     else:
-    #         if self.lora:
-    #             self.set_lora(model)
-    #         else:
-    #             self.set_lora(model, freeze_llm=False, freeze_mlp=False, use_llm_lora=0)
-
-    #     del model
-    #     torch.cuda.empty_cache()
-
-    # def set_lora(self,
-    #              freeze_llm=True,
-    #              unfreeze_lm_head=False,
-    #              use_llm_lora=128,
-    #              freeze_mlp=True,
-    #              ):
-    #     if freeze_llm:
-    #         self.llm = self.llm.eval()
-    #         _freeze_params(self.llm)
-    #     if unfreeze_lm_head:
-    #         self.llm.lm_head.requires_grad = True
-    #     if use_llm_lora:
-    #         wrap_llm_lora(self.llm, r=use_llm_lora, lora_alpha=2 * use_llm_lora, target_modules=self.target_modules)
-    #     emb = self.llm.get_input_embeddings()
-    #     emb.weight.requires_grad_(True)
-    #     self.llm.lm_head.weight.requires_grad_(True)
 
     def create_llm(self, load_weight=True, device=None):
         """Initialize the tokenizer and LLM model with proper GPU placement."""
@@ -1003,10 +909,6 @@ class LLMDecoder(nn.Module):
         self.num_new_tokens = self.tokenizer.add_tokens(token_list, special_tokens=True)
         self.img_context_token_id = self.tokenizer.convert_tokens_to_ids(IMG_CONTEXT_TOKEN)
 
-        ###添加special tokens
-        # coord_tokens = self.build_coord_tokens(x_cap=500, y_cap=1000)
-        # special_tokens_dict = {"additional_special_tokens": coord_tokens}
-        # num_added = self.tokenizer.add_special_tokens(special_tokens_dict)
 
         self.learnable_query_token_id = -10
 
@@ -1031,6 +933,8 @@ class LLMDecoder(nn.Module):
             config.llm_config._attn_implementation = self.attention_type
         config.llm_config.attn_implementation = self.attention_type
 
+        config.llm_config.gradient_checkpointing = True
+        
         if self.load_weight:
             model = InternVLChatModel.from_pretrained(
                 self.model_path, torch_dtype=self.torch_dtype, config=config
@@ -1046,20 +950,6 @@ class LLMDecoder(nn.Module):
         #    + record base vocab size for "方案C"
         # ---------------------------
         old_vocab_size = self.llm.get_input_embeddings().weight.size(0)
-        # new_vocab_size = len(self.tokenizer)
-
-        # # ✅ base_vocab_size 必须是 resize 前的大小（旧词表截止位置）
-        # self.base_vocab_size = old_vocab_size
-
-        # print("llm emb rows:", old_vocab_size)
-        # print(f"[LLM] vocab resize: {old_vocab_size} -> {new_vocab_size}")
-
-        # if new_vocab_size != old_vocab_size:
-        #     self.llm.resize_token_embeddings(new_vocab_size)
-
-        # # sanity check
-        # assert self.llm.get_input_embeddings().weight.size(0) == new_vocab_size, \
-        #     f"Embedding rows {self.llm.get_input_embeddings().weight.size(0)} != tokenizer {new_vocab_size}"
 
         # ---------------------------
         # 5) Apply freeze / LoRA
@@ -1108,40 +998,7 @@ class LLMDecoder(nn.Module):
                 target_modules=self.target_modules
             )
       
-        # ---------------------------
-        # ✅ 关键：只训练新增 token 的 embedding / lm_head 行
-        # ---------------------------
-        # base = getattr(self, "base_vocab_size", None)
-        # assert base is not None, "base_vocab_size not set. Save it before resize_token_embeddings."
 
-        # emb = self.llm.get_input_embeddings()
-        # emb.weight.requires_grad_(True)
-
-        # def _emb_hook(grad):
-        #     if grad is None:
-        #         return None
-        #     # 旧词表部分全部不更新
-        #     grad[:base].zero_()
-        #     return grad
-
-        # # 防止重复注册（可选）
-        # if not hasattr(self, "_emb_hooked"):
-        #     emb.weight.register_hook(_emb_hook)
-        #     self._emb_hooked = True
-
-        # # lm_head：同样只更新新增 token 的行（不破坏原有 logits）
-        # if hasattr(self.llm, "lm_head") and self.llm.lm_head is not None:
-        #     self.llm.lm_head.weight.requires_grad_(True)
-
-        #     def _head_hook(grad):
-        #         if grad is None:
-        #             return None
-        #         grad[:base].zero_()
-        #         return grad
-
-        #     if not hasattr(self, "_head_hooked"):
-        #         self.llm.lm_head.weight.register_hook(_head_hook)
-        #         self._head_hooked = True
 
     def _set_lora(self, freeze_llm=True, unfreeze_lm_head=False, use_llm_lora=128):
         """Set LoRA configuration for the LLM."""

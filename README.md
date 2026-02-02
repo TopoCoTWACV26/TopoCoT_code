@@ -216,6 +216,7 @@ TopoCoT_code/
 │   ├── lanesegnet/       # Lane segmentation network
 │   ├── plugin/           # Plugin modules
 │   └── configs/          # Configuration files
+├── InternVL2-2B/         # InternVL2 LLM model weights and tokenizer
 ├── tools/                # Training and evaluation scripts
 │   ├── dist_train.sh     # Stage 1 training script
 │   ├── dist_train_stage2.sh  # Stage 2 training script
@@ -224,9 +225,42 @@ TopoCoT_code/
 │   ├── evaluate/         # Evaluation tools
 │   └── visualize_test.py # Visualization script
 ├── data/                 # Dataset and generated data
-│   ├── Trainset/         # Training data
-│   ├── Testset/          # Test data
-│   └── train_conv_rdp/   # Generated conversation data
+│   ├── data_dict_subset_A_train_lanesegnet.pkl  # Training annotation file
+│   ├── data_dict_subset_A_val_lanesegnet.pkl     # Validation annotation file
+│   ├── Trainset/         # Training data (scenes 00000-00699)
+│   │   ├── 00000/        # Scene ID
+│   │   │   ├── 315967376899927209/  # Timestamp
+│   │   │   │   ├── ring_front_center.jpg
+│   │   │   │   ├── ring_front_left.jpg
+│   │   │   │   ├── ring_front_right.jpg
+│   │   │   │   ├── ring_rear_left.jpg
+│   │   │   │   ├── ring_rear_right.jpg
+│   │   │   │   ├── ring_side_left.jpg
+│   │   │   │   ├── ring_side_right.jpg
+│   │   │   │   ├── lane_with_drive.json
+│   │   │   │   ├── lane_with_drive_bev.json
+│   │   │   │   └── TopoCoT.json
+│   │   │   └── ... (more timestamps)
+│   │   ├── 00001/
+│   │   └── ... (scenes 00000 to 00699)
+│   ├── Testset/          # Test data (50 challenging scenes)
+│   │   ├── 10000/        # Scene ID
+│   │   │   ├── 315967933449927213/  # Timestamp
+│   │   │   │   ├── ring_front_center.jpg
+│   │   │   │   ├── ring_front_left.jpg
+│   │   │   │   ├── ring_front_right.jpg
+│   │   │   │   ├── ring_rear_left.jpg
+│   │   │   │   ├── ring_rear_right.jpg
+│   │   │   │   ├── ring_side_left.jpg
+│   │   │   │   └── ring_side_right.jpg
+│   │   │   └── ... (more timestamps)
+│   │   └── ... (50 challenging scenes)
+│   └── train_conv_rdp/   # Generated conversation data for training
+│       ├── {segment_id}/  # Scene ID
+│       │   ├── {timestamp}/  # Timestamp
+│       │   │   └── bev_conv.json  # Conversation format data
+│       │   └── ... (more timestamps)
+│       └── ... (more scenes)
 ├── OpenLane-V2-master/   # OpenLane-V2 dependency
 ├── convert_train_conv_rdp.py  # Data conversion script
 └── requirements.txt      # Python dependencies

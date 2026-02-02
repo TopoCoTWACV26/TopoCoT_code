@@ -8,6 +8,7 @@ TopoCoT (Topology Chain-of-Thought) is a multi-stage training pipeline for lane 
 
 - [Challenge](#challenge)
 - [Features](#features)
+- [Visualization](#visualization)
 - [Installation](#installation)
 - [Data Preparation](#data-preparation)
 - [Project Structure](#project-structure)
@@ -39,6 +40,42 @@ The workshop provides a platform for industry experts and academics to exchange 
 - **RDP Simplification**: Reduces token count by simplifying lane segments using Ramer-Douglas-Peucker algorithm
 - **Temporal Streaming**: Supports temporal context with queue-based frame processing
 - **CoT Support**: Chain-of-Thought reasoning capability (can be enabled)
+
+## Visualization
+
+### Example 1
+
+<div align="center">
+<table>
+<tr>
+<td width="50%">
+<strong>Input: Surround View</strong><br>
+<img src="figs/sur_vis1.jpg" alt="Surround View 1" width="100%">
+</td>
+<td width="50%">
+<strong>Output: Prediction Result</strong><br>
+<img src="figs/vis1.jpg" alt="Prediction Result 1" width="100%">
+</td>
+</tr>
+</table>
+</div>
+
+### Example 2
+
+<div align="center">
+<table>
+<tr>
+<td width="50%">
+<strong>Input: Surround View</strong><br>
+<img src="figs/sur_vis2.jpg" alt="Surround View 2" width="100%">
+</td>
+<td width="50%">
+<strong>Output: Prediction Result</strong><br>
+<img src="figs/vis2.jpg" alt="Prediction Result 2" width="100%">
+</td>
+</tr>
+</table>
+</div>
 
 ## Installation
 
